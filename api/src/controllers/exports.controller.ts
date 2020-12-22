@@ -63,12 +63,53 @@ export class ExportsController {
       throw new NotFoundException('unknown locale code');
     }
 
+  @Get(':labelId')
+  @UseGuards(AuthGuard())
+  @ApiUseTags('Exports')
+  @ApiOAuth2Auth()
+  @ApiOperation({ title: `Export all translated terms for a project's locale` })
+  @ApiProduces('application/octet-stream')
+  @ApiResponse({ status: HttpStatus.OK, description: 'File exported' })
+  @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Bad request' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Project or locale not found' })
+  @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Unauthorized' })
+  async exportWithLabel(@Req() req: Request, @Res() res: Response, @Param('projectId') projectId: string, @Param('labelId') labelId: string, @Query() query: ExportQuery) {
+    const user = this.auth.getRequestUserOrClient(req);
+    const membership = await this.auth.authorizeProjectAction(user, projectId, ProjectAction.ExportTranslation);
+
+    if (!query.locale) {
+      throw new BadRequestException('locale is a required param');
+    }
+
+    if (!labelId) {
+      throw new BadRequestException('LabelID is a required param');
+    }
+
+    // Ensure locale is requested project locale
+    const projectLocale = await this.projectLocaleRepo.findOne({
+      where: {
+        project: membership.project,
+        locale: {
+          code: query.locale,
+        },
+      },
+    });
+
+    if (!projectLocale) {
+      throw new NotFoundException('unknown locale code');
+    }
+
+    // const labelId = "ae99cb89-1edb-43f0-974b-7862022456f2"
+
+    console.log('METODO NUEVO');
+
     const termsWithTranslations = await this.termRepo
       .createQueryBuilder('term')
+      .innerJoinAndSelect('term.labels', 'label')
       .leftJoinAndSelect('term.translations', 'translation', 'translation.projectLocaleId = :projectLocaleId', {
         projectLocaleId: projectLocale.id,
       })
-      .where('term.projectId = :projectId', { projectId })
+      .where('term.projectId = :projectId AND label.id = :labelId', { projectId, labelId })
       .orderBy('term.value', 'ASC')
       .getMany();
 
