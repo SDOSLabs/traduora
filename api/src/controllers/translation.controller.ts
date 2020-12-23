@@ -139,7 +139,7 @@ export default class TranslationController {
       relations: ['term', 'labels'],
     });
 
-    const result = translations.map(t => ({ termId: t.term.id, value: t.value, labels: t.labels, date: t.date }));
+    const result = translations.map(t => ({ termId: t.term.id, value: t.value, labels: t.labels, date: t.date, termKey: t.term.value }));
 
     return { data: result };
   }
