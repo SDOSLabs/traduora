@@ -14,6 +14,7 @@ import {
 } from '../../stores/project-label.state';
 import { ProjectsState } from '../../stores/projects.state';
 import { TAG_COLORS } from '../../models/label';
+
 @Component({
   selector: 'app-labels-list',
   templateUrl: './labels-list.component.html',
@@ -98,6 +99,10 @@ export class LabelsListComponent implements OnInit, OnDestroy {
     if (confirm('Are you sure that you want to delete this label?')) {
       this.store.dispatch(new RemoveProjectLabel(projectId, labelId));
     }
+  }
+
+  copyLabelId(labelId) {
+    navigator.clipboard.writeText(labelId).then().catch(e => console.error(e));
   }
 
   trackElement(index: number, label: Label) {

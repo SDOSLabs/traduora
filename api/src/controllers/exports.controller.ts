@@ -63,6 +63,31 @@ export class ExportsController {
       throw new NotFoundException('unknown locale code');
     }
 
+
+    const termsWithTranslations = await this.termRepo
+      .createQueryBuilder('term')
+      .leftJoinAndSelect('term.translations', 'translation', 'translation.projectLocaleId = :projectLocaleId', {
+        projectLocaleId: projectLocale.id,
+      })
+      .where('term.projectId = :projectId', { projectId})
+      .orderBy('term.value', 'ASC')
+      .getMany();
+
+    const data: IntermediateTranslationFormat = {
+      iso: query.locale,
+      translations: termsWithTranslations.map(t => ({
+        term: t.value,
+        translation: t.translations.length === 1 ? t.translations[0].value : '',
+      })),
+    };
+
+    const serialized = await this.dump(query.format, data);
+
+    res.status(HttpStatus.OK);
+    res.contentType('application/octet-stream');
+    res.send(serialized);
+  }
+
   @Get(':labelId')
   @UseGuards(AuthGuard())
   @ApiUseTags('Exports')
