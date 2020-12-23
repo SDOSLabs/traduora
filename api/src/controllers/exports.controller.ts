@@ -124,10 +124,6 @@ export class ExportsController {
       throw new NotFoundException('unknown locale code');
     }
 
-    // const labelId = "ae99cb89-1edb-43f0-974b-7862022456f2"
-
-    console.log('METODO NUEVO');
-
     const termsWithTranslations = await this.termRepo
       .createQueryBuilder('term')
       .innerJoinAndSelect('term.labels', 'label')
